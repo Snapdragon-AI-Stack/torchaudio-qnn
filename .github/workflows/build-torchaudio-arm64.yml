@@ -41,7 +41,9 @@ jobs:
       - name: Install Build Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install wheel setuptools numpy --upgrade
+          # Explicitly install 'wheel' and 'setuptools' first to ensure bdist_wheel is available
+          pip install wheel setuptools --upgrade
+          pip install numpy ninja --upgrade
 
       - name: Install PyTorch from GitHub Release
         shell: pwsh
@@ -82,8 +84,12 @@ jobs:
         run: |
           set CMAKE_GENERATOR=Visual Studio 17 2022
           set CMAKE_GENERATOR_PLATFORM=ARM64
-          # Use 'pip wheel' for a more robust build process than calling setup.py directly
-          # We use --no-build-isolation so it can see the 'torch' we just installed
+          
+          REM Verify Torch installation
+          python -c "import torch; print(f'Torch version: {torch.__version__}')"
+          
+          REM Use 'pip wheel' for a more robust build process than calling setup.py directly
+          REM We use --no-build-isolation so it can see the 'torch' we just installed
           python -m pip wheel . --wheel-dir dist/ --no-deps --no-build-isolation
 
       - name: Upload Wheel Artifact
