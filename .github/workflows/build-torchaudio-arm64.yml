@@ -50,7 +50,8 @@ jobs:
         run: |
           # 1. Use GitHub CLI to find the latest release in your pytorch-qnn repo
           # 2. Download the wheel that matches the current Python version
-          gh release download --repo Snapdragon-AI-Stack/pytorch-qnn --pattern "*cp${{ matrix.python | replace('.', '') }}*" --dir .
+          $PY_TAG = "${{ matrix.python }}".Replace('.', '')
+          gh release download --repo Snapdragon-AI-Stack/pytorch-qnn --pattern "*cp${PY_TAG}*" --dir .
 
           # 3. Install the downloaded wheel file directly
           $WHEEL_FILE = Get-ChildItem -Filter *.whl | Select-Object -First 1
