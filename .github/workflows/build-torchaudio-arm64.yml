@@ -36,11 +36,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install wheel setuptools numpy --upgrade
 
-      - name: Download PyTorch Wheel
-        # TorchAudio REQUIRES a matching Torch installation to compile
+      - name: Install PyTorch from GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          pip install torch --extra-index-url https://github.com/Snapdragon-AI-Stack/pytorch-qnn/releases/latest
+          # 1. Use GitHub CLI to find the latest release in your pytorch-qnn repo
+          # 2. Download the wheel that matches the current Python version
+          gh release download --repo Snapdragon-AI-Stack/pytorch-qnn --pattern "*cp${{ matrix.python | replace('.', '') }}*" --dir .
 
+          # 3. Install the downloaded wheel file directly
+          $WHEEL_FILE = Get-ChildItem -Filter *.whl | Select-Object -First 1
+          pip install $WHEEL_FILE.FullName
+        
       - name: Setup FFmpeg ARM64
         # We fetch ARM64 FFmpeg headers and libs to enable the backend
         shell: pwsh
