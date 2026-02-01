@@ -1,7 +1,14 @@
 name: Build TorchAudio Windows ARM64 Wheels
+run-name: Build TorchAudio Windows ARM64 (${{ github.ref_name }})
 
 on:
   workflow_dispatch:
+    inputs:
+      publish_release:
+        description: 'Publish Release?'
+        required: false
+        type: boolean
+        default: false
   push:
     tags:
       - 'v*'
