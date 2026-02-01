@@ -85,9 +85,12 @@ jobs:
           set CMAKE_GENERATOR=Visual Studio 17 2022
           set CMAKE_GENERATOR_PLATFORM=ARM64
           
-          REM Verify Torch installation with verbose output to debug crash
-          pip list
-          python -v -X faulthandler -c "import torch; print(f'Torch version: {torch.__version__}')"
+          REM Verify Numpy standalone
+          python -c "import numpy; print(f'Numpy version: {numpy.__version__}')"
+
+          REM Create and run a debug script to trace DLL loading
+          python -c "s = \"import ctypes\norig = ctypes.CDLL\nctypes.CDLL = lambda n, *a, **k: (print(f'DEBUG: Loading {n}', flush=True), orig(n, *a, **k))[1]\nimport torch\nprint(f'Torch version: {torch.__version__}')\"; open('debug_torch.py', 'w').write(s)"
+          python debug_torch.py
           
           REM Use 'pip wheel' for a more robust build process than calling setup.py directly
           REM We use --no-build-isolation so it can see the 'torch' we just installed
