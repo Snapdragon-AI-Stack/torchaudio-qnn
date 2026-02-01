@@ -78,27 +78,17 @@ jobs:
         env:
           USE_CUDA: 0
           USE_ROCM: 0
-          # Link against our custom ARM64 FFmpeg build
           BUILD_FFMPEG: 1
           FFMPEG_ROOT: ${{ env.FFMPEG_ROOT }}
+          # Tell CMake exactly where to find the Torch we just installed
+          CMAKE_PREFIX_PATH: ${{ env.pythonLocation }}\\Lib\\site-packages\\torch
         run: |
           set CMAKE_GENERATOR=Visual Studio 17 2022
           set CMAKE_GENERATOR_PLATFORM=ARM64
           
-          REM Verify Numpy standalone
-          python -c "import numpy; print(f'Numpy version: {numpy.__version__}')"
-
-          REM List torch directory to see bundled DLLs
-          python -c "import torch, os; print('Torch dir:', os.path.dirname(torch.__file__)); [print(f) for f in os.listdir(os.path.dirname(torch.__file__)) if f.endswith('.dll')]"
-
-          REM Create and run a debug script to trace DLL loading and SKIP MSVC runtimes
-          python -c "s = \"import ctypes\norig = ctypes.CDLL\ndef hooked_cdll(n, *a, **k):\n    print(f'DEBUG: Request to load {n}', flush=True)\n    if 'msvcp140.dll' in n or 'vcruntime140.dll' in n:\n        print(f'DEBUG: SKIPPING {n} (assuming system provided)', flush=True)\n        return None\n    return orig(n, *a, **k)\nctypes.CDLL = hooked_cdll\nimport torch\nprint(f'Torch version: {torch.__version__}')\"; open('debug_torch.py', 'w').write(s)"
-          python debug_torch.py
+          # Use pip wheel with explicit environment settings
+          python -m pip wheel . --wheel-dir dist/ --no-deps --no-build-isolation -v
           
-          REM Use 'pip wheel' for a more robust build process than calling setup.py directly
-          REM We use --no-build-isolation so it can see the 'torch' we just installed
-          python -m pip wheel . --wheel-dir dist/ --no-deps --no-build-isolation
-
       - name: Upload Wheel Artifact
         uses: actions/upload-artifact@v4
         with:
